@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/providers/auth_provider.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -54,22 +55,45 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _isLoading = true);
 
     final success = await ref.read(authStateProvider.notifier).register(
-          _nameController.text,
-          _emailController.text,
-          _passwordController.text,
-          _confirmPasswordController.text,
-          'follower', // Default to normal user (follower role)
-        );
+      _nameController.text,
+      _emailController.text,
+      _passwordController.text,
+      _confirmPasswordController.text,
+      'follower',
+    );
 
     if (!mounted) return;
 
     setState(() => _isLoading = false);
 
     if (success) {
-      context.go('/home');
+      // Show beautiful success dialog
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.scale,
+        title: 'Registration Successful!',
+        desc: 'Your account has been created successfully.\nPlease log in to continue.',
+        btnOkText: 'Login Now',
+        btnOkOnPress: () {
+          context.go('/login');
+        },
+        btnOkColor: const Color(0xFF6366F1),
+        dismissOnTouchOutside: false,
+        dismissOnBackKeyPress: false,
+      ).show();
     } else {
       final authState = ref.read(authStateProvider);
-      _showSnackBar(authState.errorMessage ?? 'Registration failed');
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.scale,
+        title: 'Registration Failed',
+        desc: authState.errorMessage ?? 'Something went wrong. Please try again.',
+        btnOkText: 'Try Again',
+        btnOkOnPress: () {},
+        btnOkColor: Colors.red,
+      ).show();
     }
   }
 

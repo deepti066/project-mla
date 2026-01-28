@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/providers/auth_provider.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -39,19 +40,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     final success = await ref.read(authStateProvider.notifier).login(
-          _emailController.text,
-          _passwordController.text,
-        );
+      _emailController.text,
+      _passwordController.text,
+    );
 
     if (!mounted) return;
 
     setState(() => _isLoading = false);
 
     if (success) {
-      context.go('/home');
+      // Show welcome success dialog
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.scale,
+        title: 'Login Successful!',
+        desc: 'Welcome back! You are now logged in.',
+        btnOkText: 'Go to Home',
+        btnOkOnPress: () {
+          context.go('/home');
+        },
+        btnOkColor: const Color(0xFF6366F1),
+        dismissOnTouchOutside: false,
+      ).show();
+
+      // Optional: auto navigate after 2 seconds if you prefer
+      // Future.delayed(const Duration(seconds: 2), () {
+      //   if (mounted) context.go('/home');
+      // });
     } else {
       final authState = ref.read(authStateProvider);
-      _showSnackBar(authState.errorMessage ?? 'Login failed');
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.scale,
+        title: 'Login Failed',
+        desc: authState.errorMessage ?? 'Invalid credentials. Please try again.',
+        btnOkText: 'Try Again',
+        btnOkOnPress: () {},
+        btnOkColor: Colors.red,
+      ).show();
     }
   }
 
@@ -60,6 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       SnackBar(content: Text(message)),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

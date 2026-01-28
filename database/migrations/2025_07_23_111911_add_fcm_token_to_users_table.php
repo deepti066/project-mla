@@ -9,14 +9,18 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('fcm_token')->nullable();
+            if (!Schema::hasColumn('users', 'fcm_token')) {
+                $table->string('fcm_token')->nullable(); 
+            }
         });
     }
 
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('fcm_token');
+            if (Schema::hasColumn('users', 'fcm_token')) {
+                $table->dropColumn('fcm_token');
+            }
         });
     }
 };

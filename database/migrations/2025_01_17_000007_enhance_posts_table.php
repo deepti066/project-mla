@@ -19,7 +19,7 @@ return new class extends Migration
             
             // Add new columns for enhanced functionality
             if (!Schema::hasColumn('posts', 'caption')) {
-                $table->text('caption')->nullable()->change();
+                $table->text('caption')->nullable();
             }
             if (!Schema::hasColumn('posts', 'is_archived')) {
                 $table->boolean('is_archived')->default(false)->after('content');
@@ -34,9 +34,25 @@ return new class extends Migration
     }
 
     public function down()
-    {
-        Schema::table('posts', function (Blueprint $table) {
-            $table->dropColumnIfExists(['is_archived', 'deleted_at', 'published_at']);
-        });
-    }
+{
+    Schema::table('posts', function (Blueprint $table) {
+
+        if (Schema::hasColumn('posts', 'is_archived')) {
+            $table->dropColumn('is_archived');
+        }
+
+        if (Schema::hasColumn('posts', 'published_at')) {
+            $table->dropColumn('published_at');
+        }
+
+        if (Schema::hasColumn('posts', 'deleted_at')) {
+            $table->dropSoftDeletes();
+        }
+
+        // caption rollback (optional — decide intentionally)
+        if (Schema::hasColumn('posts', 'caption')) {
+            $table->dropColumn('caption');
+        }
+    });
+}
 };

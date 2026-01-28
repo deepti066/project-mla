@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('content');
+            $table->text('caption')->nullable();
             $table->string('media_type')->nullable(); // 'image' or 'video'
             $table->string('media_url')->nullable();
             $table->timestamps();

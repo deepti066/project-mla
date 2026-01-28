@@ -14,6 +14,10 @@ final commentsProvider = FutureProvider.family<List<Comment>, int>((ref, postId)
   }
 });
 
+extension on Map<String, dynamic> {
+  get data => null;
+}
+
 // Add Comment Provider
 final addCommentProvider = FutureProvider.family<Comment, (int, String, int?)>(
   (ref, params) async {

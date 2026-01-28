@@ -83,9 +83,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ? const Icon(Icons.person)
                             : null,
                       ),
-                      title: Text(user.name),
-                      subtitle: Text(user.email),
-                      onTap: () => context.go('/profile/${user.id}'),
+                      title: Text(user.name ?? 'Unknown User'),
+                      subtitle: Text(user.email ?? 'No email'),
+                        onTap: () => context.go('/profile/${user.id}'),
                     );
                   },
                 );

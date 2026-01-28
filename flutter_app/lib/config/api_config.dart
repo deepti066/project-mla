@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const String _baseUrl = 'http://localhost:8000';
+  // static const String _baseUrl = 'http://localhost:8000';
+  static const String _baseUrl = 'http://10.0.2.2:8000';
   static const String _apiVersion = 'api';
 
   static String get baseUrl => _baseUrl;
@@ -13,6 +14,7 @@ class ApiConfig {
   static const String posts = '/posts';
   static const String feed = '/posts/feed';
   static const String comments = '/comments';
+  static const String shares = '/shares';
   static const String users = '/user';
   static const String updateFcmToken = '/update-fcm-token';
 

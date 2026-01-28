@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/screens/auth/login_screen.dart';
@@ -12,19 +13,26 @@ import '../../presentation/screens/splash_screen.dart';
 import '../../data/providers/auth_provider.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/',
+    debugLogDiagnostics: true, // helps during development
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider); // read, not watch!
       final isLoggedIn = authState.isAuthenticated;
 
+      // If user is on login/register and becomes logged in → go home
       if (state.matchedLocation == '/login' || state.matchedLocation == '/register') {
         return isLoggedIn ? '/home' : null;
       }
 
-      if (!isLoggedIn && state.matchedLocation != '/') {
+      // If not logged in and trying to access protected route → go login
+      if (!isLoggedIn && state.matchedLocation != '/' && state.matchedLocation != '/login' && state.matchedLocation != '/register') {
         return '/login';
+      }
+
+      // Allow splash to proceed (it will call initialize)
+      if (state.matchedLocation == '/') {
+        return null;
       }
 
       return null;
@@ -49,8 +57,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-post',
         redirect: (context, state) {
+          final authState = ref.read(authStateProvider);
           final isAdmin = authState.isAuthenticated && (authState.user?.isAdmin ?? false);
-          
+
           if (!isAdmin) {
             return '/home';
           }
@@ -86,4 +95,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.listen<AuthState>(authStateProvider, (previous, next) {
+    if (previous?.isAuthenticated != next.isAuthenticated) {
+      router.refresh(); // ← triggers redirect check without rebuilding router
+    }
+  });
+
+  return router;
+
 });

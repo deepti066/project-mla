@@ -9,7 +9,7 @@ enum AuthStatus {
   loading,
   authenticated,
   unauthenticated,
-  error,
+  error, success,
 }
 
 class AuthState {
@@ -48,6 +48,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this.ref) : super(AuthState());
 
   Future<void> initialize() async {
+    // ⛔ DO NOTHING if already authenticated
+    if (state.status == AuthStatus.authenticated) return;
+
     final token = StorageService.getToken();
     if (token != null) {
       final userData = StorageService.getUser();
@@ -58,54 +61,75 @@ class AuthNotifier extends StateNotifier<AuthState> {
             status: AuthStatus.authenticated,
             user: user,
           );
-        } catch (e) {
+          return;
+        } catch (_) {
           await logout();
         }
       }
-    } else {
-      state = state.copyWith(status: AuthStatus.unauthenticated);
     }
+
+    state = state.copyWith(status: AuthStatus.unauthenticated);
   }
 
   Future<bool> login(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       final apiService = ref.read(apiServiceProvider);
-      final response = await apiService.login({
-        'email': email,
-        'password': password,
-      });
+      final response = await apiService.login({'email': email, 'password': password});
 
-      final token = response['token'] as String;
-      final userData = response['user'] as Map<String, dynamic>;
+      // print('Raw login response: $response');
+
+      final token = response['access_token'] as String?;
+      if (token == null || token.isEmpty) {
+        throw Exception('No access token received');
+      }
 
       await StorageService.saveToken(token);
-      await StorageService.saveUser(userData);
 
-      final user = User.fromJson(userData);
+      // Now fetch full user with the new token
+      final userResponse = await apiService.getCurrentUser();
+      // print('User profile response: $userResponse');
+
+      final user = User.fromJson(userResponse);
+
+      await StorageService.saveUser(user.toJson());
+
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: user,
+        errorMessage: null,
       );
+
+      // print('Login successful - full user loaded');
       return true;
     } catch (e) {
+      String friendlyMessage = 'Something went wrong. Please try again.';
+
+      if (e.toString().contains('401') || e.toString().contains('credentials') || e.toString().contains('invalid')) {
+        friendlyMessage = 'Email or password is incorrect. Please try again.';
+      } else if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        friendlyMessage = 'No internet connection. Please check your connection.';
+      }
+
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: friendlyMessage,
       );
+
+      print('Login error (friendly): $friendlyMessage');
       return false;
     }
-    return false;
   }
 
   Future<bool> register(
-    String name,
-    String email,
-    String password,
-    String passwordConfirmation,
-    String role,
-  ) async {
+      String name,
+      String email,
+      String password,
+      String passwordConfirmation,
+      String role,
+      ) async {
     state = state.copyWith(status: AuthStatus.loading);
+
     try {
       final apiService = ref.read(apiServiceProvider);
       final response = await apiService.register({
@@ -116,26 +140,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'role': role,
       });
 
-      final token = response['token'] as String;
-      final userData = response['user'] as Map<String, dynamic>;
-
-      await StorageService.saveToken(token);
-      await StorageService.saveUser(userData);
-
-      final user = User.fromJson(userData);
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
+      // If you reach here → success (no auto-login)
+      print('Raw register response: $response');
       return true;
+
     } catch (e) {
+      String friendlyMessage = 'Something went wrong. Please try again later.';
+
+      // Try to detect common backend errors
+      if (e.toString().contains('422') || e.toString().contains('email') || e.toString().contains('unique')) {
+        friendlyMessage = 'This email is already registered. Please use a different email.';
+      } else if (e.toString().contains('password') || e.toString().contains('confirmation')) {
+        friendlyMessage = 'Passwords do not match or are too weak. Please check.';
+      } else if (e.toString().contains('400') || e.toString().contains('validation')) {
+        friendlyMessage = 'Please fill all fields correctly.';
+      } else if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        friendlyMessage = 'Network error. Please check your internet connection.';
+      }
+
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: friendlyMessage,
       );
+
+      print('Register error (friendly): $friendlyMessage');
+      print('Technical error: $e');
+
       return false;
     }
-    return false;
   }
 
   Future<void> logout() async {
@@ -154,9 +186,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> updateUser(User user) async {
-    await StorageService.saveUser(user.toJson());
-    state = state.copyWith(user: user);
+  void updateUser(User? updatedUser) {
+    if (updatedUser == null) return;
+
+    state = state.copyWith(user: updatedUser);
+    // Optional: save to storage again
+    StorageService.saveUser(updatedUser.toJson());
   }
 }
 

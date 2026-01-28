@@ -1,6 +1,4 @@
 import 'package:dio/dio.dart';
-import '../models/user_model.dart';
-import '../models/post_model.dart';
 import '../../config/api_config.dart';
 
 class ApiService {
@@ -116,6 +114,11 @@ class ApiService {
 
   Future<Map<String, dynamic>> getShares(int postId) async {
     final response = await dio.get('${ApiConfig.posts}/$postId/shares');
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> deleteShare(int shareId) async {
+    final response = await dio.delete('${ApiConfig.shares}/$shareId');
     return response.data;
   }
 

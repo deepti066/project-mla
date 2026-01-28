@@ -50,13 +50,13 @@ class PostCard extends ConsumerWidget {
                           GestureDetector(
                             onTap: () => context.go('/profile/${post.user.id}'),
                             child: Text(
-                              post.user.name,
+                              post.user.name ?? 'Guest',
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                             ),
                           ),
-                          if (post.user.isVerified)
+                          if (post.user.isVerified ?? false)
                             const Padding(
                               padding: EdgeInsets.only(left: 4),
                               child: Icon(
