@@ -22,6 +22,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'role', 'bio', 'avatar_url', 
         'is_verified', 'fcm_token', 'last_seen_at', 'is_private',
+        'is_admin',
     ];
 
     protected $hidden = [
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'last_seen_at' => 'datetime',
         'is_verified' => 'boolean',
         'is_private' => 'boolean',
+        'is_admin' => 'boolean',
     ];
 
     // Relationships
@@ -102,6 +104,6 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return $this->role === 'admin';
+        return $this->is_admin ?? ($this->role === 'admin');  // ← fallback to role
     }
 }

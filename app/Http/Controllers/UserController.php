@@ -238,6 +238,7 @@ class UserController extends Controller
             'avatar' => $user->avatar_url,
             'bio' => $user->bio,
             'role' => $user->role,
+            'is_admin' => $user->isAdmin(),
             'is_verified' => $user->is_verified,
             'is_private' => $user->is_private,
             'stats' => [
@@ -260,6 +261,7 @@ class UserController extends Controller
             'avatar' => $user->avatar_url,
             'is_verified' => $user->is_verified,
             'bio' => $user->bio,
+            'is_admin' => $user->isAdmin(),
         ];
     }
 }

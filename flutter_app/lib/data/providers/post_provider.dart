@@ -7,10 +7,23 @@ final postsProvider = FutureProvider.family<List<Post>, int>((ref, page) async {
   final apiService = ref.watch(apiServiceProvider);
   try {
     final response = await apiService.getPosts(page, 15);
-    final data = response['data'] as List;
+
+    // ── ADD THESE PRINTS ───────────────────────────────────────
+    // print('=== RAW RESPONSE for page $page ===');
+    // print(response);                          // full map
+    // print('Keys in response: ${response.keys}');
+    // if (response.containsKey('data')) {
+    //   print('data type: ${response['data'].runtimeType}');
+    //   print('data length: ${(response['data'] as List?)?.length ?? "null"}');
+    // }
+    // ───────────────────────────────────────────────────────────
+
+    final data = response['data'] as List? ?? [];
     return data.map((json) => Post.fromJson(json as Map<String, dynamic>)).toList();
-  } catch (e) {
-    throw Exception('Failed to fetch posts: $e');
+  } catch (e, stack) {
+    print('ERROR fetching posts: $e');
+    print(stack);
+    rethrow;
   }
 });
 
@@ -19,10 +32,23 @@ final feedProvider = FutureProvider.family<List<Post>, int>((ref, page) async {
   final apiService = ref.watch(apiServiceProvider);
   try {
     final response = await apiService.getFeed(page, 15);
-    final data = response['data'] as List;
+
+    // ────────────────────────────── ADD THESE LINES ──────────────────────────────
+    // print('FEED RESPONSE FULL: $response');
+    // print('RESPONSE TYPE: ${response.runtimeType}');
+    // print('HAS "data" KEY? ${response.containsKey('data')}');
+    // if (response.containsKey('data')) {
+    //   print('"data" VALUE TYPE: ${response['data'].runtimeType}');
+    //   print('"data" LENGTH: ${(response['data'] as List?)?.length ?? "NOT A LIST"}');
+    // }
+    // print('ALL KEYS IN RESPONSE: ${response.keys.toList()}');
+    // ──────────────────────────────────────────────────────────────────────────────
+
+    final data = response['data'] as List? ?? [];
     return data.map((json) => Post.fromJson(json as Map<String, dynamic>)).toList();
   } catch (e) {
-    throw Exception('Failed to fetch feed: $e');
+    print('FEED ERROR: $e');
+    rethrow;
   }
 });
 
